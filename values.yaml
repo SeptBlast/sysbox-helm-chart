@@ -1,0 +1,14 @@
+deployK8S:
+  nodeSelector:
+    sysbox-install: "yes"
+  sysboxDeployK8S:
+    containerSecurityContext:
+      privileged: true
+    image:
+      repository: registry.nestybox.com/nestybox/sysbox-deploy-k8s
+      tag: v0.6.4
+    imagePullPolicy: Always
+kubernetesClusterDomain: cluster.local
+labelNode:
+  serviceAccount:
+    annotations: {}

@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "sysbox.fullname" . }}-deploy-k8s
+  labels:
+  {{- include "sysbox.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      sysbox-install: "yes"
+    {{- include "sysbox.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        sysbox-install: "yes"
+      {{- include "sysbox.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - command:
+        - bash
+        - -c
+        - /opt/sysbox/scripts/sysbox-deploy-k8s.sh ce install
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.deployK8S.sysboxDeployK8S.image.repository }}:{{ .Values.deployK8S.sysboxDeployK8S.image.tag
+          | default .Chart.AppVersion }}
+        imagePullPolicy: {{ .Values.deployK8S.sysboxDeployK8S.imagePullPolicy }}
+        name: sysbox-deploy-k8s
+        resources: {}
+        securityContext: {{- toYaml .Values.deployK8S.sysboxDeployK8S.containerSecurityContext
+          | nindent 10 }}
+        volumeMounts:
+        - mountPath: /mnt/host/etc
+          name: host-etc
+        - mountPath: /mnt/host/os-release
+          name: host-osrelease
+        - mountPath: /var/run/dbus
+          name: host-dbus
+        - mountPath: /run/systemd
+          name: host-run-systemd
+        - mountPath: /mnt/host/lib/systemd/system
+          name: host-lib-systemd
+        - mountPath: /mnt/host/etc/systemd/system
+          name: host-etc-systemd
+        - mountPath: /mnt/host/lib/sysctl.d
+          name: host-lib-sysctl
+        - mountPath: /mnt/host/opt/lib/sysctl.d
+          name: host-opt-lib-sysctl
+        - mountPath: /mnt/host/usr/bin
+          name: host-usr-bin
+        - mountPath: /mnt/host/opt/bin
+          name: host-opt-bin
+        - mountPath: /mnt/host/usr/local/bin
+          name: host-usr-local-bin
+        - mountPath: /mnt/host/opt/local/bin
+          name: host-opt-local-bin
+        - mountPath: /mnt/host/usr/lib/modules-load.d
+          name: host-usr-lib-mod-load
+        - mountPath: /mnt/host/opt/lib/modules-load.d
+          name: host-opt-lib-mod-load
+        - mountPath: /mnt/host/run
+          name: host-run
+        - mountPath: /mnt/host/var/lib
+          name: host-var-lib
+      nodeSelector: {{- toYaml .Values.deployK8S.nodeSelector | nindent 8 }}
+      serviceAccountName: {{ include "sysbox.fullname" . }}-label-node
+      tolerations:
+      - effect: NoSchedule
+        key: sysbox-runtime
+        operator: Equal
+        value: not-running
+      volumes:
+      - hostPath:
+          path: /etc
+        name: host-etc
+      - hostPath:
+          path: /etc/os-release
+        name: host-osrelease
+      - hostPath:
+          path: /var/run/dbus
+        name: host-dbus
+      - hostPath:
+          path: /run/systemd
+        name: host-run-systemd
+      - hostPath:
+          path: /lib/systemd/system
+        name: host-lib-systemd
+      - hostPath:
+          path: /etc/systemd/system
+        name: host-etc-systemd
+      - hostPath:
+          path: /lib/sysctl.d
+        name: host-lib-sysctl
+      - hostPath:
+          path: /opt/lib/sysctl.d
+        name: host-opt-lib-sysctl
+      - hostPath:
+          path: /usr/bin/
+        name: host-usr-bin
+      - hostPath:
+          path: /opt/bin/
+        name: host-opt-bin
+      - hostPath:
+          path: /usr/local/bin/
+        name: host-usr-local-bin
+      - hostPath:
+          path: /opt/local/bin/
+        name: host-opt-local-bin
+      - hostPath:
+          path: /usr/lib/modules-load.d
+        name: host-usr-lib-mod-load
+      - hostPath:
+          path: /opt/lib/modules-load.d
+        name: host-opt-lib-mod-load
+      - hostPath:
+          path: /run
+        name: host-run
+      - hostPath:
+          path: /var/lib
+        name: host-var-lib
